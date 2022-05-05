@@ -1,0 +1,265 @@
+Index: data/src/main/java/com/killua/data/DatasourceRepo.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/data/src/main/java/com/killua/data/DatasourceRepo.kt b/data/src/main/java/com/killua/data/DatasourceRepo.kt
+--- a/data/src/main/java/com/killua/data/DatasourceRepo.kt	
++++ b/data/src/main/java/com/killua/data/DatasourceRepo.kt	(date 1643856866203)
+@@ -1,23 +1,17 @@
+ package com.killua.data
+ 
+-import androidx.annotation.StringRes
+ import com.killua.data.cashing.ClubsDao
+-import com.killua.data.cashing.model.ClubsEntity
+ import com.killua.data.cashing.model.toClub
+-import com.killua.data.cashing.model.toEntity
+ import com.killua.data.models.Club
+ import com.killua.data.networking.ClubsServices
+ import com.killua.data.networking.model.toClub
+-import com.killua.data.utils.OperatorResult
++import com.killua.data.networking.model.toClubEntity
+ import com.killua.data.utils.RepoResult
+-import com.killua.data.utils.mapToRepoRes
+-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
++import io.reactivex.rxjava3.core.Flowable
+ import io.reactivex.rxjava3.core.Observable
+ import io.reactivex.rxjava3.core.Single
+ import io.reactivex.rxjava3.disposables.CompositeDisposable
+-import io.reactivex.rxjava3.observers.DisposableSingleObserver
+ import io.reactivex.rxjava3.schedulers.Schedulers
+-import timber.log.Timber
+ import java.util.*
+ import javax.inject.Inject
+ import kotlin.math.abs
+@@ -32,56 +26,29 @@
+     }
+ 
+     override fun getAndCheckClubs(
+-        @StringRes database_error: Int,
+-        @StringRes insert_failure: Int,
+-        @StringRes remove_failure: Int,
+-        @StringRes apiFailure: Int,
+-        @StringRes databaseEmpty: Int,
+         isConnected: Boolean
+-    ): Observable<RepoResult<List<Club>>> {
+-        return Observable.create<RepoResult<List<Club>>> { emitter ->
+-            emitter.onNext(RepoResult.Loading)
+-            val clubs = getClubsDb(database_error, databaseEmpty)
+-            try {
+-                when (clubs) {
+-                    is OperatorResult.Done -> {
+-                        if ((clubs.data.isNullOrEmpty() || isDataOld(clubs.data.first().createDate)) && isConnected)
++    ): Observable<RepoResult<List<Club>>> = Observable.create { emitter ->
+ 
+-                            getClubsApi(
+-                                database_error,
+-                                insert_failure,
+-                                remove_failure,
+-                                apiFailure
+-                            ).mapToRepoRes(emitter)
+-                        else emitter.onNext(RepoResult.Success(clubs.data?.map { it.toClub() }))
+-                    }
+-                    is OperatorResult.Error -> {
+-                        if (clubs.message == databaseEmpty && isConnected)
++       getClubsApi().subscribe({ it ->
++           
++            emitter.onNext(RepoResult.Success(it))
++        }, {
+ 
+-                            getClubsApi(
+-                                database_error,
+-                                insert_failure,
+-                                remove_failure,
+-                                apiFailure
+-                            ).mapToRepoRes(emitter)
+-                        else emitter.onNext(RepoResult.Failure(clubs.message))
+-                    }
+-                    OperatorResult.Staging -> emitter.onNext(RepoResult.Loading)
+-                }
+-            } catch (e: Exception) {
+-                emitter.onError(e)
+-            } finally {
+-                emitter.onComplete()
+-            }
+-        }.subscribeOn(Schedulers.io())
+-            .observeOn(AndroidSchedulers.mainThread())
++
++        }
++        )
++
++
++        emitter.onComplete()
++    }
+ 
++
++    override fun dispose() {
++        compositeDisposable.dispose()
+     }
+ 
+     private fun isDataOld(x: Calendar?): Boolean {
+         return if (x != null) {
+-            Timber.e(x.get(Calendar.DAY_OF_MONTH).toString())
+-            Timber.e(Calendar.getInstance().get(Calendar.DAY_OF_MONTH).toString())
+             abs(
+                 x.get(Calendar.DAY_OF_MONTH) - Calendar.getInstance()
+                     .get(Calendar.DAY_OF_MONTH)
+@@ -90,130 +57,31 @@
+     }
+ 
+ 
+-    private fun getClubsDb(
+-        @StringRes database_error: Int,
+-        @StringRes databaseEmpty: Int
+-    ): OperatorResult<List<ClubsEntity>> {
+-        var result: OperatorResult<List<ClubsEntity>> = OperatorResult.Staging
+-        compositeDisposable.add(
+-            clubsDao.getAllClubs().subscribeWith(
+-                object : DisposableSingleObserver<List<ClubsEntity>>() {
+-                    override fun onSuccess(list: List<ClubsEntity>) {
+-                        result = if (list.isNotEmpty())
+-                            OperatorResult.Done(list)
+-                        else
+-                            OperatorResult.Error(databaseEmpty)
+-                    }
+-
+-                    override fun onError(e: Throwable) {
+-                        result = OperatorResult.Error(database_error)
+-                    }
+-                })
+-        )
+-
+-        return result
+-    }
+-
+-    private fun getClubsApi(
+-        @StringRes database_error: Int,
+-        @StringRes insert_failure: Int,
+-        @StringRes remove_failure: Int,
+-        @StringRes apiFailure: Int
+-    ): OperatorResult<List<Club>> {
+-        var operatorResult: OperatorResult<List<Club>> = OperatorResult.Staging
+-
+-        compositeDisposable.add(
+-            clubsServices.getAllClubs()
+-                .subscribeOn(Schedulers.io())
+-                .doOnSuccess { clubsApi ->
+-
+-                    operatorResult = when (val res = updateClubsInDb(
+-                        clubsApi.map { it.toClub() },
+-                        insert_failure,
+-                        remove_failure,
+-                        database_error
+-                    )) {
+-                        is OperatorResult.Done -> OperatorResult.Done(res.data)
+-                        is OperatorResult.Error -> OperatorResult.Error(res.message)
+-                        OperatorResult.Staging -> OperatorResult.Staging
+-                    }
+-
+-                }
+-                .doOnError {
+-                    operatorResult = OperatorResult.Error(apiFailure)
+-                }
+-                .observeOn(Schedulers.io())
+-                .subscribe())
+-        return operatorResult
+-    }
+-
+-
+-    private fun updateClubsInDb(
+-        club: List<Club>,
+-        @StringRes insert_failure: Int,
+-        @StringRes remove_failure: Int,
+-        @StringRes database_error: Int
+-    ): OperatorResult<List<Club>> {
+-        return try {
+-            when (val rmValue = removeAllClubDb(remove_failure)) {
+-                is OperatorResult.Done -> {
+-                    when (val inValue =
+-                        insertClubDb(club.map { it.toEntity() }.toTypedArray(), insert_failure)) {
+-                        is OperatorResult.Error -> OperatorResult.Error(inValue.message)
+-                        OperatorResult.Staging -> OperatorResult.Staging
+-                        is OperatorResult.Done -> OperatorResult.Done(club)
+-                    }
+-                }
+-
+-                is OperatorResult.Error -> OperatorResult.Error(rmValue.message)
+-                OperatorResult.Staging -> OperatorResult.Staging
+-            }
+-
+-        } catch (e: Exception) {
+-            OperatorResult.Error(database_error)
+-
+-        }
+-    }
+-
+-    private fun insertClubDb(
+-        club: Array<ClubsEntity>,
+-        @StringRes insert_failure: Int
+-    ): OperatorResult<Nothing> {
+-        var operatorResult: OperatorResult<Nothing> = OperatorResult.Staging
+-
+-        compositeDisposable.add(
+-            clubsDao.insertClub(*club).doOnComplete {
+-            }.subscribeOn(Schedulers.trampoline())
+-                .doOnError {
+-                    operatorResult = OperatorResult.Error(insert_failure)
+-                }
+-                .doOnComplete {
+-                    operatorResult = OperatorResult.Done()
+-                }.observeOn(Schedulers.io())
+-                .subscribe()
+-        )
+-        return operatorResult
+-
+-    }
+-
+-    private fun removeAllClubDb(@StringRes remove_failure: Int): OperatorResult<Nothing> {
+-        var operatorResult: OperatorResult<Nothing> = OperatorResult.Staging
+-        compositeDisposable.add(
+-            clubsDao.removeClubs()
+-                .subscribeOn(Schedulers.trampoline())
+-                .doOnError {
+-                    operatorResult = OperatorResult.Error(remove_failure)
+-                }.doOnComplete {
+-                    operatorResult = OperatorResult.Done()
+-                }
+-                .observeOn(Schedulers.io())
+-                .subscribe()
+-        )
+-        return operatorResult
+-    }
++    private fun getClubsApi(): Flowable<List<Club>> = clubsServices.getAllClubs()
++        .subscribeOn(Schedulers.trampoline())
++        .map { list1 ->
++            clubsDao.insertClub(*list1.map { it.toClubEntity() }.toTypedArray())
++            list1.map { it.toClub() }
++        }
++
++    private fun getDb(isConnected: Boolean): List<Club> {
++        var tempList: List<Club> = emptyList()
++        clubsDao.getAllClubs().subscribeOn(Schedulers.trampoline())
++            .observeOn(Schedulers.io())
++            .subscribe({ list ->
++                if (list.firstOrNull() != null && !isDataOld(list.first().createDate))
++                    tempList = list.map { it.toClub() }
++                else if (isConnected)
++                    getClubsApi().subscribe {
++                        tempList = getDb(isConnected)
++                    }.dispose()
++                else tempList = emptyList()
++            }, {
++                tempList = emptyList()
++            }).let {
+ 
+-    override fun dispose() {
+-        if (!compositeDisposable.isDisposed)
+-            compositeDisposable.dispose()
+-    }
+-}
++                compositeDisposable.add(it)
++            }
++        return tempList
++    }
++}
+\ No newline at end of file

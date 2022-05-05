@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ranky</string>
+    <string name="insert_failure">Błąd podczas zapisywania nowych klubów lokalnie</string>
+    <string name="database_error">Błąd bazy danych</string>
+    <string name="remove_failure">Usuwanie starych awarii klubów</string>
+    <string name="update_api_failure">Aktualizacja z niepowodzenia API</string>
+    <string name="millions">%1$d miliony</string>
+    <string name="description_text">Klub <b>%1$s</b> z %2$s ma wartość %3$d milionów euro.</string>
+    <string name="main_fragment_title">wszystko o klubach</string>
+    <string name="name_sort">Wg nazwy</string>
+    <string name="value_sort">wartość klubowa</string>
+    <string name="database_need_to_update">Baza danych wymaga aktualizacji</string>
+    <string name="no_internet">Brak połączenia z Internetem</string>
+    <string name="reconnect_btn">ponowne połączenie</string>
+</resources>

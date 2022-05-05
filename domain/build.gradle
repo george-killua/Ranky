@@ -1,0 +1,44 @@
+plugins {
+    id "com.android.library"
+    id "org.jetbrains.kotlin.android"
+    id "kotlin-kapt"
+}
+
+android {
+
+
+    compileSdk 32
+    defaultConfig {
+        minSdk 23
+        targetSdk 32
+
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+
+        jvmTarget = '1.8'
+    }
+    namespace 'com.killua.domain'
+
+}
+
+dependencies {
+    //rx3
+    implementation Dependencies.RxJavaAndroid3
+    // logging
+    implementation Dependencies.Timber
+    // dependency injection
+    implementation Dependencies.Dagger
+    implementation Dependencies.AndroidXAnnotations
+    implementation project(path: ':data')
+    kapt Dependencies.DaggerCompiler
+    kapt Dependencies.DaggerCompilerAndroid
+
+}
+
+
+

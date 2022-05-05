@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ranky</string>
+    <string name="value_sort">Nach Vereinswert</string>
+    <string name="name_sort">Nach Name</string>
+    <string name="main_fragment_title">alles über Vereine</string>
+    <string name="description_text">Der Club <b>%1$s</b> aus %2$s hat einen Wert von %3$d Millionen Euro.</string>
+    <string name="millions">%1$d Millionen</string>
+    <string name="update_api_failure">Update von API-Fehler</string>
+    <string name="remove_failure">Entfernen alter Schlägerfehler</string>
+    <string name="database_error">Datenbankfehler</string>
+    <string name="insert_failure">Fehler beim lokalen Speichern neuer Clubs</string>
+    <string name="database_need_to_update">" Datenbank muss aktualisiert werden"</string>
+    <string name="no_internet">Es besteht keine Internetverbindung</string>
+    <string name="reconnect_btn">Wiederverbindung</string>
+</resources>

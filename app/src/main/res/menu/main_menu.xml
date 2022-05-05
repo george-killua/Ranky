@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/overflowMenu"
+        android:icon="@drawable/ic_filter_list"
+        android:title=""
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/m_item_value"
+                android:icon="@drawable/ic_value_sort"
+                android:title="@string/value_sort" />
+            <item
+                android:id="@+id/m_item_name"
+                android:icon="@drawable/ic_name_abc"
+                android:title="@string/name_sort" />
+        </menu>
+    </item>
+</menu>

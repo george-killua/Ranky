@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Ranky</string>
+    <string name="insert_failure">Error saving new Clubs Locally</string>
+    <string name="database_error">Database Error</string>
+    <string name="remove_failure">Removing old Clubs Failure</string>
+    <string name="update_api_failure">Update From Api Failure</string>
+    <string name="millions">%1$d millions</string>
+    <string name="description_text">The club <b>%1$s</b> from %2$s has a value of %3$d millions euros.</string>
+    <string name="main_fragment_title">all about clubs</string>
+    <string name="name_sort">By name</string>
+    <string name="value_sort">By club value</string>
+    <string name="database_need_to_update">Database need to update</string>
+    <string name="no_internet">There is no Internet connection</string>
+    <string name="reconnect_btn">Reconnection</string>
+
+</resources>
